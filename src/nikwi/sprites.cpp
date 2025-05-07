@@ -55,10 +55,10 @@ void Frame::makeMirror()
 	SDL_LockSurface(image);
 	for (int y=0;y<image->h;y++)
 	{
-		unsigned short	*src =
-			&((unsigned short*)image->pixels)[y*image->pitch/2];
-		unsigned short	*dst =
-			&((unsigned short*)mirror->pixels)[y*mirror->pitch/2]
+		Uint32	*src =
+			&((Uint32*)image->pixels)[y*image->pitch/4];
+		Uint32	*dst =
+			&((Uint32*)mirror->pixels)[y*mirror->pitch/4]
 			+ (image->w - 1);
 		for (int x=0;x<image->w;x++,src++,dst--)
 			*dst = *src; 
@@ -119,7 +119,7 @@ void Sprite::addFrame(Frame *frame)
 void Sprite::calcBoundingBox()
 {
 	bool		topFound = false, leftFound = false;
-	unsigned short	*src;
+	Uint32	*src;
 	
 	bx1 = by1 = bx2 = by2 = 0;
 	
@@ -131,8 +131,8 @@ void Sprite::calcBoundingBox()
 	for (int y=0;y<frame[0]->image->h;y++)
 	{
 		bool	hasPixels = false;
-		src = &((unsigned short*)frame[0]->image->pixels)[y*
-			frame[0]->image->pitch/2];
+		src = &((Uint32*)frame[0]->image->pixels)[y*
+			frame[0]->image->pitch/4];
 		for (int x=0;x<frame[0]->image->w;x++,src++)
 		{
 			if (*src != SDL_MapRGB(frame[0]->image->format, 248, 0,
@@ -155,11 +155,11 @@ void Sprite::calcBoundingBox()
 	for (int x=0;x<frame[0]->image->w;x++)
 	{
 		bool		hasPixels = false;
-		unsigned short	slice;
+		Uint32	slice;
 		for (int y=0;y<frame[0]->image->h;y++)
 		{
-			slice = ((unsigned short*)frame[0]->image->pixels)[y*
-				frame[0]->image->pitch/2 + x];
+			slice = ((Uint32*)frame[0]->image->pixels)[y*
+				frame[0]->image->pitch/4 + x];
 			if (slice != SDL_MapRGB(frame[0]->image->format, 248,0,
 				248))
 			{

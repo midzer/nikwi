@@ -176,8 +176,6 @@ static void mainLoop()
 								debugMode =
 								     !debugMode;
 								debugCounter =0;
-								if (!debugMode)
-					    SDL_WM_SetCaption("Nikwi", "Nikwi");
 							}
 							break;
 						case SDLK_F10:

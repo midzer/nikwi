@@ -28,7 +28,10 @@
 #ifndef __GFX_H_INCLUDED__
 #define __GFX_H_INCLUDED__
 
+extern SDL_Window	*window;
+extern SDL_Renderer	*renderer;
 extern SDL_Surface	*screen;
+extern SDL_Texture	*sdlTexture;
 extern bool		fullscreen;
 
 SDL_Surface *createSurface(int width, int height, bool colorKey=true);

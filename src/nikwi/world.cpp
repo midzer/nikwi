@@ -286,7 +286,7 @@ void World::removeAllObjects()
 void World::drawStaticPart()
 {
 	float		r, g, b, rs, gs, bs;
-	unsigned short	*dest;
+	Uint32	*dest;
 	SDL_LockSurface(screen);
 	
 	switch (bgnd)
@@ -377,7 +377,7 @@ void World::drawStaticPart()
 	
 	unsigned short	*sprp = spr?spr->frame[0]->localCopy:NULL;
 	
-	dest = (unsigned short*)screen->pixels;
+	dest = (Uint32*)screen->pixels;
 	for (uint y=0;y<480;y++,r+=rs,g+=gs,b+=bs)
 	{
 		for (uint x=0;x<640;x++,dest++)
@@ -410,7 +410,7 @@ void World::drawStaticPart()
 				rv, gv, bv);
 			*dest = color;
 		}
-		dest += (screen->pitch/2)-640;
+		dest += (screen->pitch/4)-640;
 	}
 	SDL_UnlockSurface(screen);
 

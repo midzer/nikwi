@@ -7,9 +7,9 @@ SOURCES = $(wildcard src/nikwi/*.cpp) src/slashfx/main.c $(wildcard src/slashtdp
 OBJECTS = $(patsubst %.c,%.o,$(patsubst %.cpp,%.o,$(SOURCES)))
 HEADERS = $(wildcard src/nikwi/*.h) src/slashfx/slashfx.h $(wildcard src/slashtdp/slashtdp/*.h) $(wildcard src/us/uscript/*.h) src/badcfg/badcfg.h
 ifeq ($(shell uname -s),Darwin)
-LIBS = -m32 -framework SDL -framework Cocoa
+LIBS = -m32 -framework SDL2 -framework Cocoa
 else
-LIBS = -lSDL
+LIBS = -lSDL2
 endif
 ifeq ($(shell uname -s | sed s/[0-9]*_.*//),MINGW)
 LIBS := $(LIBS) -mwindows -static-libgcc `$(CXX) -print-file-name=libstdc++.a`
@@ -18,7 +18,7 @@ endif
 CFLAGS := -g3 -Wall -Wno-write-strings -Isrc/badcfg -Isrc/nikwi -Isrc/slashfx -Isrc/slashtdp -Isrc/us $(CFLAGS) $(XCFLAGS) $(CPPFLAGS)
 CXXFLAGS = $(CFLAGS)
 ifeq ($(shell uname -s),Darwin)
-CFLAGS := -m32 $(CFLAGS) -I/Library/Frameworks/SDL.framework/Headers
+CFLAGS := -m32 $(CFLAGS) -I/Library/Frameworks/SDL2.framework/Headers
 endif
 
 .PHONY: all
@@ -35,18 +35,18 @@ tools: src/tools/bmp2ut/bmp2ut src/tools/upack/upack
 
 src/tools/bmp2ut/bmp2ut: src/tools/bmp2ut/bmp2ut.c
 ifeq ($(shell uname -s),Darwin)
-	$(CC) -o $@ $< -framework SDL -framework Cocoa -I/Library/Frameworks/SDL.framework/Headers
+	$(CC) -o $@ $< -framework SDL2 -framework Cocoa -I/Library/Frameworks/SDL2.framework/Headers
 else
-	$(CC) -o $@ $< -lSDL
+	$(CC) -o $@ $< -lSDL2
 endif
 
 src/tools/upack/upack: src/tools/upack/upack.c
 	$(CC) -o $@ $<
 
 ifeq ($(shell uname -s),Darwin)
-OBJECTS := $(OBJECTS) src/nikwi/osx/SDLMain.o
-src/nikwi/osx/SDLMain.o: src/nikwi/osx/SDLMain.m
-	$(CC) $(CFLAGS) -c -o $@ $< -m32 -framework SDL -framework Cocoa
+OBJECTS := $(OBJECTS) src/nikwi/osx/SDL2Main.o
+src/nikwi/osx/SDLMain.o: src/nikwi/osx/SDL2Main.m
+	$(CC) $(CFLAGS) -c -o $@ $< -m32 -framework SDL2 -framework Cocoa
 endif
 
 justdata.up: tools

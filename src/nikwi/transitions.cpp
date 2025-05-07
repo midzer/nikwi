@@ -44,7 +44,7 @@ Transition::~Transition()
 		free(screen2);
 }
 
-void Transition::grab(unsigned short *target)
+void Transition::grab(Uint32 *target)
 {
 	if (SDL_MUSTLOCK(screen))
 		SDL_LockSurface(screen);
@@ -56,15 +56,15 @@ void Transition::grab(unsigned short *target)
 void Transition::begin()
 {
 	if (!screen1)
-		screen1 = (unsigned short*)malloc(screen->pitch*screen->h);
+		screen1 = (Uint32*)malloc(screen->pitch*screen->h);
 	grab(screen1);
-	pitch1 = screen->pitch/2;
+	pitch1 = screen->pitch/4;
 	if (!tempScreen)
 		tempScreen = createSurface(screen->w, screen->h, false);
 	saveScreen = screen;
 	screen = tempScreen;
 	if (!screen2)
-		screen2 = (unsigned short*)malloc(screen->pitch*screen->h);
+		screen2 = (Uint32*)malloc(screen->pitch*screen->h);
 }
 
 void Transition::end()
@@ -89,7 +89,7 @@ void Transition::updateScreen()
 void Transition::beginPlay()
 {
 	grab(screen2);
-	pitch2 = screen->pitch/2;
+	pitch2 = screen->pitch/4;
 	screen = saveScreen;
 	if (tempScreen)
 		SDL_FreeSurface(tempScreen);
@@ -112,7 +112,7 @@ void RevealTransition::play()
 	
 	for (int y=0;y<480;y+=10)
 	{
-		memcpy(&screen1[y*pitch1], &screen2[y*pitch2], 12800);
+		memcpy(&screen1[y*pitch1], &screen2[y*pitch2], 640 * 10 * 4);
 		updateScreen();
 		SDL_Delay(1);
 	}
@@ -138,7 +138,7 @@ void LinesTransition::play()
 	{
 		for (int yy=0;yy<48;yy++)
 			memcpy(&screen1[(yy*10+y)*pitch1],
-				&screen2[(yy*10+y)*pitch2], 1280);
+				&screen2[(yy*10+y)*pitch2], 640 * 4);
 		updateScreen();
 		SDL_Delay(10);
 	}
@@ -158,16 +158,16 @@ MosaicTransition::~MosaicTransition()
 
 void MosaicTransition::bar(int x1, int y1, int x2, int y2, int color)
 {
-	unsigned short	*dst = &screen1[y1*pitch1 + x1];
-	unsigned short	line[1280];
+	Uint32	*dst = &screen1[y1*pitch1 + x1];
+	Uint32	line[1280];
 	int		w = (x2 - x1 + 1)*2;
-	for (int x=0;x<w/2;x++)
+	for (int x=0;x<w;x++)
 		line[x] = color;
 	for (int y=y1;y<=y2;y++,dst+=pitch1)
-		memcpy(dst, line, w);
+		memcpy(dst, line, w * 2);
 }
 
-void MosaicTransition::applyMosaic(int size, unsigned short *from, int pitch)
+void MosaicTransition::applyMosaic(int size, Uint32 *from, int pitch)
 {
 	for (int y=0;y<screen->h;y += size)
 		for (int x=0;x<screen->w;x += size)
@@ -215,8 +215,8 @@ void DoubleLinesTransition::play()
 	for (int y=0;y<480;y+=2)
 	{
 		int	y2 = 479-y;
-		memcpy(&screen1[y*pitch1], &screen2[y*pitch2], 1280);
-		memcpy(&screen1[y2*pitch1], &screen2[y2*pitch2], 1280);
+		memcpy(&screen1[y*pitch1], &screen2[y*pitch2], 640 * 4);
+		memcpy(&screen1[y2*pitch1], &screen2[y2*pitch2], 640 * 4);
 
 		if (!(y&0x0F))
 		{

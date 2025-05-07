@@ -30,8 +30,8 @@
 
 struct Transition
 {
-	unsigned short	*screen1;
-	unsigned short	*screen2;
+	Uint32	*screen1;
+	Uint32	*screen2;
 	int		pitch1;
 	int		pitch2;
 	SDL_Surface	*tempScreen;
@@ -40,7 +40,7 @@ struct Transition
 	Transition();
 	virtual ~Transition();
 	
-	void grab(unsigned short *target);
+	void grab(Uint32 *target);
 	void begin();
 	void end();
 	void updateScreen();
@@ -72,7 +72,7 @@ struct MosaicTransition : public Transition
 	virtual ~MosaicTransition();
 	
 	void bar(int x1, int y1, int x2, int y2, int color);
-	void applyMosaic(int size, unsigned short *from, int pitch);
+	void applyMosaic(int size, Uint32 *from, int pitch);
 	
 	virtual void play();
 };

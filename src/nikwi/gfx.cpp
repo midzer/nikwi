@@ -29,10 +29,10 @@
 
 //#define HALF_SIZED_SCREEN
 
+SDL_Window	*window = NULL;
+SDL_Renderer	*renderer = NULL;
 SDL_Surface	*screen = NULL;
-#ifdef HALF_SIZED_SCREEN
-SDL_Surface	*rscreen = NULL;
-#endif
+SDL_Texture	*sdlTexture = NULL;
 bool		fullscreen = false;
 
 static SDL_Joystick	*joy = NULL;
@@ -60,15 +60,15 @@ SDL_Surface *createSurface(int width, int height, bool colorKey)
 		bm = screen->format->Bmask;
 	}
 
-	surf = SDL_CreateRGBSurface(SDL_HWSURFACE|(colorKey?SDL_SRCCOLORKEY:0),
-		width, height, 16, rm, gm, bm, 0);
+	surf = SDL_CreateRGBSurface(0,
+		width, height, 32, rm, gm, bm, 0);
 	if (!surf)
 		return NULL;
 		
 
 	if (colorKey)
 	{
-		SDL_SetColorKey(surf, SDL_SRCCOLORKEY, SDL_MapRGB(surf->format,
+		SDL_SetColorKey(surf, SDL_TRUE, SDL_MapRGB(surf->format,
 			248, 0, 248));
 	}
 	
@@ -82,7 +82,7 @@ SDL_Surface *loadImage(String file)
 	unsigned short	width;
 	unsigned short	height;
 	unsigned short	*pixels;
-	unsigned short	*spixels;
+	Uint32	*spixels;
 	SDL_Surface	*surf;
 	if (!data)
 	{
@@ -110,7 +110,7 @@ SDL_Surface *loadImage(String file)
 	uint	index = 0;
 	for (uint h=0;h<height;h++)
 	{
-		spixels = &((unsigned short*)surf->pixels)[h*surf->pitch/2];
+		spixels = &((Uint32*)surf->pixels)[h*surf->pitch/4];
 		for (uint w=0;w<width;w++)
 		{
 			/*
@@ -141,7 +141,7 @@ SDL_Surface *loadImage(String file)
 
 void drawLine(int x1, int y1, int x2, int y2, int color)
 {
-	unsigned short	*pixels = (unsigned short*)screen->pixels;
+	Uint32 *pixels = (Uint32*)screen->pixels;
 	float	len = hypot(x2 - x1, y2 - y1);
 	float	x, y, dx, dy;
 	
@@ -158,7 +158,7 @@ void drawLine(int x1, int y1, int x2, int y2, int color)
 
 void drawBox(int x1, int y1, int x2, int y2, int color)
 {
-	unsigned short	*pixels = (unsigned short*)screen->pixels;
+	Uint32 *pixels = (Uint32*)screen->pixels;
 	for (int x=x1;x<x2;x++)
 	{
 		if (x < 0 || x > 639)
@@ -182,36 +182,34 @@ void drawBox(int x1, int y1, int x2, int y2, int color)
 bool initGfx(String winCaption)
 {
 	SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO|SDL_INIT_JOYSTICK);
+	int width = 640;
+	int height = 480;
 	#ifdef HALF_SIZED_SCREEN
-	rscreen = SDL_SetVideoMode(320, 240, 16, (fullscreen?SDL_FULLSCREEN:0)|
-		SDL_SWSURFACE|SDL_DOUBLEBUF);
-	if (!rscreen)
-		rscreen = SDL_SetVideoMode(320, 240, 16,
-			(fullscreen?SDL_FULLSCREEN:0));
-	if (!rscreen)
-		rscreen = SDL_SetVideoMode(320, 240, 16, 0);
-	
-	screen = createSurface(640, 480, false);
-	
-	screen = SDL_CreateRGBSurface(SDL_HWSURFACE, 640, 480, 16,
-		rscreen->format->Rmask,
-		rscreen->format->Gmask,
-		rscreen->format->Bmask,
-		rscreen->format->Amask);
-	#else	
-	screen = SDL_SetVideoMode(640, 480, 16, (fullscreen?SDL_FULLSCREEN:0)|
-		SDL_HWSURFACE|SDL_DOUBLEBUF);
-	if (!screen)
-		screen = SDL_SetVideoMode(640, 480, 16,
-			(fullscreen?SDL_FULLSCREEN:0));
-	if (!screen)
-		screen = SDL_SetVideoMode(640, 480, 16, 0);
-	
-	if (!screen)
-		return false;
+	width = 320;
+	height = 240;
 	#endif
+
+	window = SDL_CreateWindow(winCaption,
+		SDL_WINDOWPOS_UNDEFINED,
+		SDL_WINDOWPOS_UNDEFINED,
+		width, height,
+		fullscreen ? SDL_WINDOW_FULLSCREEN : 0);
+
+	renderer = SDL_CreateRenderer(window, -1, 0);
+
+	screen = SDL_CreateRGBSurface(0, 640, 480, 32,
+			0x00FF0000,
+			0x0000FF00,
+			0x000000FF,
+			0xFF000000);
+
+    sdlTexture = SDL_CreateTexture(renderer,
+				SDL_PIXELFORMAT_RGB888,
+				SDL_TEXTUREACCESS_STREAMING,
+				640, 480);
 	
-	SDL_WM_SetCaption(winCaption, winCaption);
+	if (!window || !renderer || !screen || !sdlTexture)
+		return false;
 	SDL_ShowCursor(false);
 	
 	joy = SDL_JoystickOpen(0);
@@ -229,45 +227,9 @@ void shutdownGfx()
 
 void updateSystemScreen()
 {
-	#ifdef HALF_SIZED_SCREEN
-	
-	if (SDL_MUSTLOCK(screen))
-		SDL_LockSurface(screen);
-	if (SDL_MUSTLOCK(rscreen))
-		SDL_LockSurface(rscreen);
-	
-	unsigned short	*spixels = (unsigned short*)screen->pixels;
-	unsigned short	*rpixels = (unsigned short*)rscreen->pixels;
-	unsigned int	spitch = screen->pitch;
-	unsigned int	rpitch = rscreen->pitch >> 1;
-	unsigned int	sindex, rindex, sstart = 0, rstart = 0;
-	
-	for (int y=0;y<240;y++)
-	{
-		sindex = sstart;
-		rindex = rstart;
-		
-		for (int x=0;x<320;x++)
-		{
-			rpixels[rindex] = spixels[sindex];
-			
-			sindex += 2;
-			++rindex;
-		}
-		
-		sstart += spitch;
-		rstart += rpitch;
-	}
-	
-	if (SDL_MUSTLOCK(rscreen))
-		SDL_UnlockSurface(rscreen);
-	if (SDL_MUSTLOCK(screen))
-		SDL_UnlockSurface(screen);
-	
-	SDL_Flip(rscreen);
-	
-	#else
-	SDL_Flip(screen);
-	#endif
+	SDL_UpdateTexture(sdlTexture, NULL, screen->pixels, screen->pitch);
+	SDL_RenderClear(renderer);
+	SDL_RenderCopy(renderer, sdlTexture, NULL, NULL);
+	SDL_RenderPresent(renderer);
 }
 

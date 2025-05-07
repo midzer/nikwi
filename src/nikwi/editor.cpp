@@ -50,7 +50,6 @@ void Editor::loadWorld()
 	for (Object *ob=world->firstObject;ob;ob = ob->next)
 		ob->visible = true;
 	sprintf(buff, "Editing world #%i", aWorld);
-	SDL_WM_SetCaption(buff, buff);
 }
 
 void Editor::enter()
